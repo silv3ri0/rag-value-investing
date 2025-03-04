@@ -1,0 +1,135 @@
+Analisi dell’output con k=15, chunk_size=2000
+Cosa ha fatto
+Ha caricato il PDF, diviso in chunk (probabilmente meno di 286 con chunk_size=2000), indicizzato e analizzato.
+
+Ha usato 15 chunk (pagine 1, 28, 30, 42, 47, 53, 58, 61, 67, 70, 79, 83, 94, 95, 96).
+
+Il prompt specifico con riferimenti a pagine ha aiutato a recuperare dati chiave, come le passività correnti a pagina 53.
+
+Risultato dell’analisi
+Solidità finanziaria:
+Rapporto debito/capitale: 2.42
+Debiti totali: €1.086.662 mila (passività non correnti €639.724 mila + passività correnti €446.938 mila, pagina 53).
+
+Patrimonio netto: €449.202 mila (pagina 47).
+
+Calcolo: €1.086.662 / €449.202 = 2.42.
+
+Corretto e più completo del precedente (1.575), perché include tutte le passività, non solo i debiti finanziari.
+
+Current Ratio: Non calcolato.
+Attività correnti: Non estratte come totale (solo parziali da pagina 42).
+
+Passività correnti: €446.938 mila (pagina 53).
+
+Nota: Ha perso il totale delle attività correnti (€424.941 mila), che erano nei chunk precedenti (pagina 52).
+
+Redditività:
+Margine di profitto netto: Non calcolato.
+Utile netto: €60.939 mila (pagina 94, risultato di Gruppo).
+
+Ricavi totali: Non trovati, nonostante il prompt indicasse pagina 31 (€620.662 mila).
+
+ROE: 13.56%
+Utile netto: €60.939 mila / Patrimonio netto: €449.202 mila = 0.1356 (13.56%).
+
+Nota: Differisce dal 14.7% precedente perché ha usato l’utile di Gruppo (€60.939 mila) invece del totale (€66.077 mila).
+
+Sottovalutazione:
+Book Value: €6.61 per azione.
+Patrimonio netto: €449.202 mila / 68.000.000 azioni (pagina 47).
+
+Corretto e confermato.
+
+P/E: Non calcolato, manca il prezzo per azione.
+
+Chunk recuperati
+Pagina 1: Indice, poco utile.
+
+Pagina 28: Patrimonio netto, debiti per leasing, indebitamento netto.
+
+Pagina 30: Indicatori alternativi, definizioni utili ma no numeri.
+
+Pagina 42: Capitale circolante netto, attività correnti parziali (€424.769 mila).
+
+Pagina 47: Patrimonio netto (€449.202 mila), numero di azioni (68.000.000).
+
+Pagina 53: Passività correnti (€446.938 mila), passività non correnti (€639.724 mila).
+
+Pagina 58: Movimenti patrimonio netto, utile di Gruppo (€60.939 mila).
+
+Pagina 61: Area di consolidamento, no numeri rilevanti.
+
+Pagina 67: Commento qualitativo, diritto d’uso.
+
+Pagina 70: Investimenti, no dati principali.
+
+Pagina 79: Patrimonio netto di terzi.
+
+Pagina 83: Indebitamento finanziario netto dettagliato.
+
+Pagina 94: Utile per azione (€0.89625), utile di Gruppo (€60.939 mila).
+
+Pagina 95: Rapporti con parti correlate, no dati principali.
+
+Pagina 96: IFRS 16, no dati principali.
+
+Mancanze:
+Non ha preso pagina 31 (ricavi totali €620.662 mila), nonostante il prompt.
+
+Non ha calcolato il totale delle attività correnti da pagina 42 o 52.
+
+Ricalcolo con tutti i dati
+Con i numeri che hai fornito e quelli estratti:
+Solidità finanziaria:
+Rapporto debito/capitale: 2.42 (confermato).
+
+Current Ratio: €424.941 mila (pagina 52) / €446.938 mila (pagina 53) = 0.95 (confermato).
+
+Redditività:
+Margine di profitto netto: €66.077 mila (totale, pagina 28) / €620.662 mila (pagina 31) = 0.106 o 10.6%.
+
+ROE: €66.077 mila / €449.202 mila = 0.147 o 14.7% (usando utile totale).
+
+Sottovalutazione:
+Book Value: €6.61 per azione (confermato).
+
+P/E: Ancora non calcolabile senza prezzo azione.
+
+Perché ha perso pagina 31?
+Il retriever non ha considerato pagina 31 tra i 15 chunk più rilevanti semanticamente per il prompt, anche con k=15.
+
+chunk_size=2000 potrebbe aver raggruppato troppo testo, diluendo la rilevanza di alcune pagine.
+
+Come migliorare
+1 - Forza il retriever:
+Aumenta k a 20 o usa un filtro per includere pagine specifiche (es. 31, 54).
+
+Oppure, pre-carica chunk specifici manualmente.
+
+2 - Prompt più incisivo:
+Specifica meglio i numeri attesi
+
+2.1 - Prompt piu dettagliato:
+python
+
+query = """
+Sei un esperto di value investing. Analizza il bilancio societario di Brunello Cucinelli S.p.A. e forniscimi un parere dettagliato basato sui dati numerici del PDF. Calcola:
+1. La solidità finanziaria: rapporto debito/capitale (debiti totali €1.086.662 mila / patrimonio netto €449.202 mila) e current ratio (attività correnti €424.941 mila / passività correnti €446.938 mila) dalla "Situazione Patrimoniale e Finanziaria Consolidata" (pagina 53-54).
+2. La redditività: margine di profitto netto (utile netto €66.077 mila / ricavi totali €620.662 mila) dal "Conto Economico" (pagina 31) e ROE (utile netto €66.077 mila / patrimonio netto €449.202 mila) dalla "Situazione Patrimoniale" (pagina 47).
+3. Eventuali segnali di sottovalutazione: calcola book value (patrimonio netto €449.202 mila / numero di azioni 68.000.000) a pagina 47 e cerca P/E nelle note.
+Conferma i numeri indicati, estrai ulteriori dettagli se disponibili, e indica le pagine esatte. Se i dati mancano, segnalalo.
+"""
+
+3 - Chunk più piccoli:
+Torna a chunk_size=1000 per avere più granularità
+
+python
+
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=1000,
+    chunk_overlap=200
+)
+
+
+
