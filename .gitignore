@@ -1,0 +1,8 @@
+/gitignore
+.env
+venv/
+faiss_index/
+*.pyc
+__pycache__/
+data/bilancio_societa_small.pdf
+data/bilancio_societa_big.pdf
