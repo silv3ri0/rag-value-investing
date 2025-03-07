@@ -52,21 +52,19 @@ python src/rag_analysis.py
 * Usa il modello gpt-4-turbo di OpenAI per analizzare il bilancio e rispondere a una query predefinita sul value investing.
 * Stampa i risultati, inclusi i chunk utilizzati per l’analisi.
 
-## Prompt base:
-"Sei un esperto di value investing. Analizza il bilancio societario e forniscimi un parere su:
-1. La solidità finanziaria (es. rapporto debito/capitale, liquidità).
-2. La redditività (es. margine di profitto, ROE).
-3. Eventuali segnali di sottovalutazione o sopravvalutazione rispetto al valore intrinseco.
-Fornisci stime numeriche quando possibile basandoti sui dati disponibili"
-
-## Nota: 
-Questo è un prompt basico e generico. Non specifica metriche dettagliate o sezioni particolari del bilancio (es. stato patrimoniale o conto economico), quindi l’analisi potrebbe essere generica o limitata ai dati più evidenti nel PDF. Per risultati più precisi, il prompt può essere migliorato con richieste più specifiche.
-
 ## Output atteso:
 * Un’analisi testuale con stime numeriche (se i dati sono presenti nel PDF) su:
 * Solidità finanziaria (es. rapporto debito/capitale, liquidità).
 * Redditività (es. margine di profitto, ROE).
 * Sottovalutazione/sopravvalutazione.
+* Viene salvata nella cartella output una versione per ogni run di un output con un analisi finanziaria dopo l'analisi del bilancio
+
+## Spiegazione file:
+* rag_analysis.py - usa chatgpt4
+* rag_analysis_deepseekR1.py - usa deepseekR1 passando da openrouter
+* rag_analysis_deepseekR1-noOpenRouter.py - usa deepseekR1 passando direttamente da loro
+* rag_analysis_localModel.py - tentativo fallito perchè il mio notebook con 16Giga di Ram non ha retto Mistral in locale
+
 
 
 
