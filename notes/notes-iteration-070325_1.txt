@@ -1,0 +1,73 @@
+Grande, cazzo! L’output è uscito e il sistema dinamico ha funzionato, ma ci sono un paio di problemi da sistemare perché il modello ha fatto qualche casino con i numeri e il calcolo dell’EPS/P-E è andato storto. Analizziamo tutto passo passo, vediamo cosa è andato bene e cosa no, e correggiamo il codice per avere un’analisi perfetta.
+Cosa ha funzionato
+Caricamento e preprocessing:
+Ha caricato il PDF, diviso in 294 chunk (con chunk_size=1000), creato gli embedding e indicizzato con FAISS. Tutto liscio.
+
+Prezzo azione dinamico:
+Ha recuperato il prezzo attuale di BC.MI da yfinance: €116.00 (valido per oggi, 7 marzo 2025). Perfetto!
+
+Retrieval:
+Ha preso 20 chunk, incluse pagine chiave come 28 (utile netto), 47 (patrimonio netto e numero di azioni), 89 (ricavi), 83 (debiti), anche se non ha usato pagina 53-54 come speravamo.
+
+Analisi dinamica:
+Ha calcolato margine di profitto netto (10.64%), ROE (14.71%), e book value (€6.61) usando i dati corretti dai chunk.
+
+Cosa è andato storto
+Rapporto debito/capitale:
+Ha usato solo l’indebitamento finanziario netto (€68.676 mila, pagina 83) invece dei debiti totali (€1.086.662 mila, pagina 53). Risultato: 0.153 invece di 2.42.
+
+Problema: Non ha trovato pagina 53 con i debiti totali (passività correnti + non correnti).
+
+Current Ratio:
+Ha usato il capitale circolante netto (€200.588 mila, pagina 42) come attività correnti, che è sbagliato (attività correnti reali sono €424.941 mila, pagina 52).
+
+Passività correnti: €129.560 mila (solo debiti finanziari correnti + leasing, pagina 83), invece di €446.938 mila (pagina 53).
+
+Risultato: 1.55 invece di 0.95.
+
+Problema: Ha ignorato la Situazione Patrimoniale completa (pagina 53-54).
+
+EPS e P/E dinamici:
+L’analisi interna del modello calcola EPS = €0.97 e P/E = 119.59, corretti (anche se arrotonda €0.971 a €0.97).
+
+Ma il parsing esterno (post-analisi) dà EPS = €0.001 e P/E = 119375.88, assurdo!
+
+Problema: Il parsing nel codice non ha estratto correttamente utile netto e numero di azioni dal testo dell’analisi, probabilmente per un errore di formato o regex.
+
+Correzioni necessarie
+Debiti totali e Current Ratio:
+Il retriever non ha preso pagina 53-54. Aumentiamo k a 30 o forziamo il modello a cercare meglio quei dati.
+
+Parsing EPS/P-E:
+Il parsing dinamico è fallito perché il formato del testo non è prevedibile. O miglioriamo il parsing o lasciamo che il modello calcoli tutto internamente.
+
+Modifiche principali
+Prompt più chiaro:
+Specificato "debiti totali (passività correnti + passività non correnti)" per evitare che usi solo l’indebitamento netto.
+
+Aggiunto "valori totali e non parziali" per forzare il modello a cercare i dati corretti.
+
+Ribadite le sezioni e le pagine per guidare meglio il retriever.
+
+Aumentato k a 30:
+Per includere più chunk e aumentare la probabilità di prendere pagina 53-54 (passività totali).
+
+Rimozione parsing esterno:
+Il parsing dinamico non funzionava bene. Lasciamo che il modello calcoli EPS e P/E internamente, basandosi sui dati estratti.
+
+Output atteso
+Prezzo azione: €116.00 (o simile, aggiornato al momento dell’esecuzione).
+
+Analisi:
+Rapporto debito/capitale: ~2.42 (se trova pagina 53).
+
+Current ratio: ~0.95 (se trova pagina 53-54).
+
+Margine di profitto netto: ~10.65% (pagina 89).
+
+ROE: ~14.71% (pagine 28, 47).
+
+Book value: ~€6.61 (pagina 47).
+
+P/E: ~119.6 (con EPS ≈ €0.971 e prezzo €116.00).
+

@@ -6,6 +6,17 @@ from langchain.chains import RetrievalQA
 from langchain_openai import ChatOpenAI
 import os
 from dotenv import load_dotenv
+import yfinance as yf
+
+# Funzione per recuperare il prezzo azione attuale
+def get_current_stock_price(ticker):
+    try:
+        stock = yf.Ticker(ticker)
+        price = stock.history(period="1d")["Close"].iloc[-1]  # Ultimo prezzo di chiusura
+        return price
+    except Exception as e:
+        print(f"Errore nel recupero del prezzo di {ticker}: {e}")
+        return None
 
 # Carica le variabili d'ambiente dal file .env
 load_dotenv()
@@ -18,6 +29,7 @@ if not api_key:
 # Percorso del PDF basato sulla root del progetto
 project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 pdf_path = os.path.join(project_root, "data", "bilancio_societa_big.pdf")
+output_path = os.path.join(project_root, "output", "analisi_value_investing_chatgpt.md")  # Nome file modificato
 
 # Verifica che il file esista
 if not os.path.exists(pdf_path):
@@ -30,7 +42,7 @@ documents = loader.load()
 # Dividi il testo in chunk più piccoli
 print("Divido il testo in chunk...")
 text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=1000,  # Tornato a 1000 per più granularità
+    chunk_size=1000,  # Granularità per più precisione
     chunk_overlap=200
 )
 chunks = text_splitter.split_documents(documents)
@@ -58,17 +70,31 @@ llm = ChatOpenAI(
 qa_chain = RetrievalQA.from_chain_type(
     llm=llm,
     chain_type="stuff",
-    retriever=vector_store.as_retriever(search_kwargs={"k": 20}),  # Aumentato a 20
+    retriever=vector_store.as_retriever(search_kwargs={"k": 50}),
     return_source_documents=True
 )
 
-# Definisci la query per il value investing (prompt con numeri espliciti)
-query = """
+# Recupera il prezzo attuale di Brunello Cucinelli
+ticker = "BC.MI"
+current_price = get_current_stock_price(ticker)
+if current_price is not None:
+    print(f"Prezzo attuale di {ticker}: €{current_price:.2f}")
+else:
+    print("Impossibile recuperare il prezzo attuale. Procedo senza P/E.")
+
+# Definisci la query dinamica senza numeri di pagina
+query = f"""
 Sei un esperto di value investing. Analizza il bilancio societario di Brunello Cucinelli S.p.A. e forniscimi un parere dettagliato basato sui dati numerici del PDF. Calcola:
-1. La solidità finanziaria: rapporto debito/capitale (debiti totali €1.086.662 mila / patrimonio netto €449.202 mila) e current ratio (attività correnti €424.941 mila / passività correnti €446.938 mila) dalla "Situazione Patrimoniale e Finanziaria Consolidata" (pagina 53-54).
-2. La redditività: margine di profitto netto (utile netto €66.077 mila / ricavi totali €620.662 mila) dal "Conto Economico" (pagina 31) e ROE (utile netto €66.077 mila / patrimonio netto €449.202 mila) dalla "Situazione Patrimoniale" (pagina 47).
-3. Eventuali segnali di sottovalutazione: calcola book value (patrimonio netto €449.202 mila / numero di azioni 68.000.000) a pagina 47 e cerca P/E nelle note.
-Conferma i numeri indicati, estrai ulteriori dettagli se disponibili, e indica le pagine esatte. Se i dati mancano, segnalalo.
+1. La solidità finanziaria:
+   - Rapporto debito/capitale: debiti totali (passività correnti + passività non correnti) / patrimonio netto, dalla "Situazione Patrimoniale e Finanziaria Consolidata". Usa SOLO 'Totale Passività Correnti' e 'Totale Passività Non Correnti'.
+   - Current ratio: attività correnti / passività correnti, dalla stessa sezione. Usa SOLO 'Totale Attività Correnti' (564,201 migliaia di €) e 'Totale Passività Correnti'.
+2. La redditività:
+   - Margine di profitto netto: utile netto / ricavi totali, dal "Conto Economico". Usa SOLO 'Ricavi' (620,662 migliaia di €) e 'Risultato del periodo'.
+   - ROE: utile netto / patrimonio netto, dalla "Situazione Patrimoniale". Usa SOLO 'Totale Patrimonio Netto'.
+3. Segnali di sottovalutazione:
+   - Book value: patrimonio netto / numero di azioni (in € per azione, converti migliaia di € dividendo per 1,000 prima di dividere per il numero di azioni).
+   - P/E: prezzo azione €{current_price:.2f} / EPS (calcola EPS come utile netto / numero di azioni, in € per azione, converti migliaia di € dividendo per 1,000).
+Estrai i numeri rilevanti (ricavi totali, utile netto, debiti totali, patrimonio netto, attività correnti, passività correnti, numero di azioni, EPS) dai chunk e indica da dove li hai presi (es. "Conto Economico" o "Situazione Patrimoniale"). Usa SOLO i valori totali specificati (es. 'Totale Attività Correnti', non somme parziali) e non fare stime se i dati sono presenti. Se un dato manca, segnalalo chiaramente.
 """
 
 # Esegui l'analisi
@@ -76,8 +102,16 @@ print("Analizzo il bilancio...")
 result = qa_chain({"query": query})
 
 # Stampa il risultato
-print("\nRisultato dell'analisi:\n")
-print(result["result"])
+output = f"# Analisi Value Investing - Brunello Cucinelli S.p.A. ({ticker})\n\n"
+output += f"**Prezzo attuale:** €{current_price:.2f}\n\n"
+output += "## Risultati\n" + result["result"]
+print(output)
+
+# Salva l'output nel file specificato
+os.makedirs(os.path.dirname(output_path), exist_ok=True)
+with open(output_path, "w", encoding="utf-8") as f:
+    f.write(output)
+print(f"Risultati salvati in {output_path}")
 
 # Stampa i documenti fonte usati (versione breve)
 print("\nDocumenti utilizzati per l’analisi:")

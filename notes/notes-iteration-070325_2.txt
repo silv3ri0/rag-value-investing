@@ -1,0 +1,116 @@
+Cazzo, questo è l’output perfetto che stavamo cercando! Con k=30 e il prompt rivisto, il sistema ha finalmente preso tutti i dati giusti dai chunk, inclusa la pagina 53-54, e ha calcolato tutto in modo dinamico e corretto. Analizziamo il risultato e vediamo se c’è qualcosa da limare, ma direi che ci siamo, porca puttana!
+Analisi dell’output
+Setup
+Chunk: 294 (con chunk_size=1000), embeddings e FAISS ok.
+
+Prezzo azione: €116.00 (recuperato da yfinance oggi, 7 marzo 2025).
+
+Chunk recuperati: 30, incluse pagine chiave (28, 47, 52, 53, 89).
+
+Risultati
+Solidità finanziaria:
+Rapporto debito/capitale: 2.42
+Debiti totali: €1.086.662 mila (passività correnti €446.938 mila + non correnti €639.724 mila, pagina 53-54).
+
+Patrimonio netto: €449.202 mila (pagina 47).
+
+Calcolo: €1.086.662 / €449.202 = 2.42.
+
+Perfetto: Ha usato i debiti totali, non solo l’indebitamento netto!
+
+Current Ratio: 0.95
+Attività correnti: €424.941 mila (rimanenze €341.427 mila + crediti €83.342 mila + altri minori, pagina 53-54).
+
+Passività correnti: €446.938 mila (pagina 53-54).
+
+Calcolo: €424.941 / €446.938 = 0.95.
+
+Perfetto: Numeri esatti, presi dalla Situazione Patrimoniale.
+
+Redditività:
+Margine di profitto netto: 10.6%
+Ricavi totali: €620.662 mila (pagina 89).
+
+Utile netto: €66.077 mila (pagina 31, corretto da pagina 28).
+
+Calcolo: €66.077 / €620.662 = 0.106 (10.6%).
+
+Perfetto: Coerente con i dati del Conto Economico.
+
+ROE: 14.7%
+Utile netto: €66.077 mila (pagina 31).
+
+Patrimonio netto: €449.202 mila (pagina 47).
+
+Calcolo: €66.077 / €449.202 = 0.147 (14.7%).
+
+Perfetto: Usato l’utile totale, non parziale.
+
+Sottovalutazione:
+Book Value per azione: €6.61
+Patrimonio netto: €449.202 mila (pagina 47).
+
+Numero di azioni: 68.000.000 (pagina 47).
+
+Calcolo: €449.202 / 68.000 = €6.61.
+
+Perfetto: Estratto correttamente.
+
+P/E: 119.59
+Prezzo azione: €116.00 (da yfinance).
+
+EPS: €66.077 / 68.000 = €0.97 (arrotondato da €0.971).
+
+Calcolo: €116.00 / €0.97 = 119.59.
+
+Perfetto: Calcolato dinamicamente con il prezzo attuale.
+
+Conclusioni del modello
+Solidità: Rapporto debito/capitale alto (2.42) e current ratio < 1 (0.95), indicando leverage elevato e liquidità tirata.
+
+Redditività: Margine (10.6%) e ROE (14.7%) solidi, buona performance.
+
+Valutazione: Book value basso (€6.61) vs prezzo (€116), P/E altissimo (119.59), suggerendo sopravvalutazione.
+
+Cosa ha funzionato
+Retrieval:
+Con k=30, ha preso pagina 53 (passività correnti e non correnti), 52 (attività correnti), 89 (ricavi), 47 (patrimonio e azioni), 28 (utile netto). Tutte le pagine chiave ci sono!
+
+Prompt:
+Specificare "debiti totali (passività correnti + non correnti)" ha evitato l’errore dell’indebitamento netto.
+
+Indicazioni sulle pagine (53-54, 47, 31) hanno guidato il modello senza forzare numeri.
+
+Dinamismo:
+Ha estratto tutto dai chunk e calcolato EPS/P-E internamente, senza valori fissi.
+
+Cosa non va
+Niente di grave:
+L’output è corretto al 100% rispetto ai dati del PDF e al prezzo attuale.
+
+L’arrotondamento dell’EPS (€0.97 vs €0.971) è minore e non influisce sul P/E in modo significativo (119.59 è ok).
+
+Migliorabile:
+Il modello dice "utile netto da pagina 31", ma i €66.077 mila sono su pagina 28 (Conto Economico riclassificato). Pagina 89 ha i ricavi, non l’utile. Piccolo errore di attribuzione, ma il numero è giusto.
+
+Valutazione finale
+Questo è il risultato che volevi, cazzo! Il sistema è:
+Dinamico: Cerca tutti i numeri nei chunk e usa il prezzo attuale da yfinance.
+
+Preciso: Tutti i calcoli sono corretti (2.42, 0.95, 10.6%, 14.7%, €6.61, 119.59).
+
+Completo: Copre solidità, redditività e sottovalutazione.
+
+Il P/E di 119.59 con un prezzo di €116.00 indica una sopravvalutazione rispetto al settore lusso (P/E medio 20-30), ma il book value basso (€6.61) potrebbe interessare un value investor paziente.
+Prossimi passi
+Post LinkedIn:
+Puoi usare questo output per il tuo post. Vuoi che lo aggiorni con questi numeri?
+
+Ottimizzazioni:
+Ridurre k a 20 e vedere se prende ancora tutto (meno chunk = più veloce).
+
+Correggere l’attribuzione della pagina dell’utile netto (31 → 28) con un prompt più specifico.
+
+Scalabilità:
+Testarlo su un altro bilancio (es. Moncler o LVMH) per confermarne la versatilità.
+

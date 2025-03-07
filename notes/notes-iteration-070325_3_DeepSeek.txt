@@ -1,0 +1,62 @@
+Cazzo, che delusione! Il sistema con OpenRouter e k=10 ha girato senza errori, ma il risultato è una merda: DeepSeek non ha trovato quasi niente nei chunk e si è lamentato che i dati mancavano. Questo non va bene, porca puttana! Analizziamo cosa è successo e risolviamo, perché così non ci siamo proprio.
+Cosa è andato storto
+Retrieval insufficiente:
+Con k=10, il retriever ha preso solo 10 chunk (pagine 30, 37, 42, 44, 60, 71, 79, 82, 85, 95), ma ha completamente saltato le pagine chiave:
+Pagina 28: Utile netto (€66.077 mila).
+
+Pagina 47: Patrimonio netto (€449.202 mila) e numero di azioni (68.000.000).
+
+Pagina 53-54: Passività totali (€1.086.662 mila), attività correnti (€424.941 mila), passività correnti (€446.938 mila).
+
+Pagina 89: Ricavi totali (€620.662 mila).
+
+Risultato: DeepSeek non aveva i dati per calcolare un cazzo di niente.
+
+Limite di contesto:
+OpenRouter con deepseek-chat:free ha un limite di token basso (probabilmente 4K o 8K token). Anche con k=10, 10 chunk da ~1000 caratteri ciascuno più la query potrebbero aver superato il limite, e DeepSeek ha ignorato il resto.
+
+DeepSeek meno robusto:
+Rispetto a GPT-4, DeepSeek sembra meno bravo a fare supposizioni o cercare oltre i chunk forniti. Ha detto “dati mancanti” senza nemmeno provare a stimare.
+
+Confronto con prima
+Con GPT-4 e k=30, prendeva tutte le pagine rilevanti (28, 47, 53-54, 89) e calcolava tutto correttamente.
+
+Con DeepSeek su OpenRouter e k=10, ha preso solo chunk sparsi e inutili per i calcoli richiesti.
+
+Come risolvere
+Aumenta k:
+Torna a k=30 (o anche k=20) per assicurarti che il retriever prenda più chunk, incluse le pagine chiave. OpenRouter potrebbe gestire 20-30 chunk, ma dobbiamo stare attenti al limite di token.
+
+Prompt più specifico:
+Aggiungiamo un’istruzione per forzare DeepSeek a cercare meglio nei chunk o segnalare quali mancano, invece di arrendersi subito.
+
+Controlla il limite di token:
+OpenRouter non specifica il limite esatto per deepseek-chat:free, ma potrebbe essere 4K o 8K. Riduciamo chunk_size a 500 per avere più chunk piccoli e rientrare.
+
+Alternativa locale:
+Se OpenRouter continua a fare schifo, possiamo scaricare DeepSeek o Mistral localmente ed evitare questi limiti del cazzo.
+
+codice rigenerato con:
+
+Cosa cambia
+chunk_size=500: Chunk più piccoli per ridurre il numero di token inviati a OpenRouter.
+
+k=20: Più chunk per aumentare le possibilità di prendere pagine utili (28, 47, 53-54, 89).
+
+Prompt migliorato: Forziamo DeepSeek a cercare meglio e a non arrendersi subito.
+
+
+Risultato atteso
+Con k=20 e chunk più piccoli, dovrebbe prendere più pagine rilevanti.
+
+DeepSeek dovrebbe calcolare almeno alcuni indici (es. book value se trova pagina 47) e segnalare quali dati mancano con più dettaglio.
+
+Fammi vedere il nuovo output, cazzo! Se ancora non funziona, possiamo:
+Passare a DeepSeek locale (scaricando il modello).
+
+Usare Hugging Face Inference API con un modello più robusto.
+
+Tornare a DeepSeek diretto domani dopo il reset dei token.
+
+Vai e fammi vedere cosa tira fuori stavolta questo DeepSeek del cazzo!
+
